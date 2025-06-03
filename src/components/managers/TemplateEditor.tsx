@@ -266,15 +266,15 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({ file, onSave }) 
             <div className="text-xs space-y-2">
               <div className="flex items-center">
                 <div className="w-3 h-3 bg-purple-500 rounded mr-2"></div>
-                <span>Jinja2 Blocks ({% %})</span>
+                <span>Jinja2 Blocks ({`{% %}`})</span>
               </div>
               <div className="flex items-center">
                 <div className="w-3 h-3 bg-blue-500 rounded mr-2"></div>
-                <span>Variables ({{ }})</span>
+                <span>Variables ({`{{ }}`})</span>
               </div>
               <div className="flex items-center">
                 <div className="w-3 h-3 bg-green-500 rounded mr-2"></div>
-                <span>Comments ({# #})</span>
+                <span>Comments ({`{# #}`})</span>
               </div>
               <div className="flex items-center">
                 <div className="w-3 h-3 bg-orange-500 rounded mr-2"></div>
