@@ -1,27 +1,38 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+import React, { useState } from 'react';
+import { WelcomeScreen } from './components/WelcomeScreen';
+import { MainInterface } from './components/MainInterface';
+import { STMProvider } from './contexts/STMContext';
+import './App.css';
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+function App() {
+  const [showWelcome, setShowWelcome] = useState(true);
+  const [selectedMode, setSelectedMode] = useState<string>('');
+
+  const handleWelcomeComplete = (mode: string) => {
+    setSelectedMode(mode);
+    setShowWelcome(false);
+  };
+
+  const handleBackToWelcome = () => {
+    setShowWelcome(true);
+    setSelectedMode('');
+  };
+
+  return (
+    <STMProvider>
+      <div className="app">
+        {showWelcome ? (
+          <WelcomeScreen onModeSelect={handleWelcomeComplete} />
+        ) : (
+          <MainInterface 
+            selectedMode={selectedMode} 
+            onBackToWelcome={handleBackToWelcome}
+          />
+        )}
+      </div>
+    </STMProvider>
+  );
+}
 
 export default App;
