@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -149,7 +150,8 @@ void SystemClock_Config(void)
   }
 }`
               }
-            ]
+            ],
+            subfolders: []
           }
         ]
       },
@@ -263,21 +265,21 @@ void SystemClock_Config(void)
     );
   };
 
-  const filteredFiles = templateStructure ? 
-    getAllFiles(templateStructure).filter(file => 
-      file.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      file.path.toLowerCase().includes(searchTerm.toLowerCase())
-    ) : [];
-
   function getAllFiles(folder: TemplateFolder): TemplateFile[] {
     let files = [...(folder.files || [])];
-    if (folder.subfolders) {
+    if (folder.subfolders && Array.isArray(folder.subfolders)) {
       folder.subfolders.forEach(subfolder => {
         files = files.concat(getAllFiles(subfolder));
       });
     }
     return files;
   }
+
+  const filteredFiles = templateStructure ? 
+    getAllFiles(templateStructure).filter(file => 
+      file.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      file.path.toLowerCase().includes(searchTerm.toLowerCase())
+    ) : [];
 
   return (
     <div className="flex h-full">
