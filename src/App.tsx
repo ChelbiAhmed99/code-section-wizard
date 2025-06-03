@@ -1,36 +1,36 @@
 
 import React, { useState } from 'react';
+import './App.css';
 import { WelcomeScreen } from './components/WelcomeScreen';
 import { MainInterface } from './components/MainInterface';
 import { STMProvider } from './contexts/STMContext';
-import './App.css';
+import { ProjectFilesProvider } from './contexts/ProjectFilesContext';
 
 function App() {
-  const [showWelcome, setShowWelcome] = useState(true);
   const [selectedMode, setSelectedMode] = useState<string>('');
 
-  const handleWelcomeComplete = (mode: string) => {
+  const handleModeSelect = (mode: string) => {
     setSelectedMode(mode);
-    setShowWelcome(false);
   };
 
   const handleBackToWelcome = () => {
-    setShowWelcome(true);
     setSelectedMode('');
   };
 
   return (
     <STMProvider>
-      <div className="app">
-        {showWelcome ? (
-          <WelcomeScreen onModeSelect={handleWelcomeComplete} />
-        ) : (
-          <MainInterface 
-            selectedMode={selectedMode} 
-            onBackToWelcome={handleBackToWelcome}
-          />
-        )}
-      </div>
+      <ProjectFilesProvider>
+        <div className="min-h-screen">
+          {selectedMode ? (
+            <MainInterface 
+              selectedMode={selectedMode} 
+              onBackToWelcome={handleBackToWelcome}
+            />
+          ) : (
+            <WelcomeScreen onModeSelect={handleModeSelect} />
+          )}
+        </div>
+      </ProjectFilesProvider>
     </STMProvider>
   );
 }
