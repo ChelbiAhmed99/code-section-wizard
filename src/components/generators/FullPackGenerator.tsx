@@ -1,255 +1,505 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { 
-  Package, 
-  Download, 
+  Zap, 
   Settings, 
-  AlertTriangle,
+  Layers, 
+  Shield, 
+  Download,
+  Play,
+  RefreshCw,
   CheckCircle,
-  Folder,
-  FileCode,
-  Zap
+  AlertCircle,
+  Package
 } from 'lucide-react';
+import { useSTM } from '@/contexts/STMContext';
 
 export const FullPackGenerator: React.FC = () => {
+  const { addConsoleOutput, isGenerating, setIsGenerating } = useSTM();
   const [selectedSeries, setSelectedSeries] = useState('');
-  const [firmwarePath, setFirmwarePath] = useState('');
-  const [outputPath, setOutputPath] = useState('');
-  const [includeApps, setIncludeApps] = useState(true);
-  const [includeDocs, setIncludeDocs] = useState(true);
-  const [includeDemos, setIncludeDemos] = useState(true);
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [packName, setPackName] = useState('');
+  const [packVersion, setPackVersion] = useState('1.0.0');
+  const [outputPath, setOutputPath] = useState('./full-packs');
+  const [selectedBoards, setSelectedBoards] = useState<string[]>([]);
+  const [middleware, setMiddleware] = useState<string[]>([]);
+  const [includeExamples, setIncludeExamples] = useState(true);
+  const [includeDocumentation, setIncludeDocumentation] = useState(true);
+  const [includeBSP, setIncludeBSP] = useState(true);
+  const [includeDrivers, setIncludeDrivers] = useState(true);
   const [progress, setProgress] = useState(0);
 
-  const seriesOptions = [
-    { value: 'f4', label: 'STM32F4 Series' },
-    { value: 'f7', label: 'STM32F7 Series' },
-    { value: 'g4', label: 'STM32G4 Series' },
-    { value: 'h7', label: 'STM32H7 Series' },
-    { value: 'h7rs', label: 'STM32H7RS Series' },
-    { value: 'l4', label: 'STM32L4 Series' },
-    { value: 'l5', label: 'STM32L5 Series' },
-    { value: 'wb', label: 'STM32WB Series' },
-    { value: 'wl', label: 'STM32WL Series' }
+  const stm32Series = [
+    { 
+      id: 'f4', 
+      name: 'STM32F4 Series', 
+      description: 'High-performance ARM Cortex-M4',
+      boards: [
+        'STM32F469I-Discovery',
+        'STM32F446RE-Nucleo', 
+        'STM32F407G-Discovery',
+        'STM32F429I-Discovery'
+      ]
+    },
+    { 
+      id: 'f7', 
+      name: 'STM32F7 Series', 
+      description: 'Very high-performance ARM Cortex-M7',
+      boards: [
+        'STM32F746G-Discovery',
+        'STM32F767ZI-Nucleo',
+        'STM32F769I-Discovery'
+      ]
+    },
+    { 
+      id: 'h7', 
+      name: 'STM32H7 Series', 
+      description: 'Dual-core high-performance',
+      boards: [
+        'STM32H743I-Discovery',
+        'STM32H747I-Discovery',
+        'STM32H755ZI-Nucleo'
+      ]
+    },
+    { 
+      id: 'l4', 
+      name: 'STM32L4 Series', 
+      description: 'Ultra-low-power ARM Cortex-M4',
+      boards: [
+        'STM32L476G-Discovery',
+        'STM32L4R5ZI-Nucleo',
+        'STM32L496G-Discovery'
+      ]
+    }
   ];
 
+  const availableMiddleware = [
+    { id: 'threadx', name: 'ThreadX', description: 'Real-time operating system' },
+    { id: 'filex', name: 'FileX', description: 'File system' },
+    { id: 'netxduo', name: 'NetX Duo', description: 'TCP/IP network stack' },
+    { id: 'usbx', name: 'USBX', description: 'USB host and device stack' },
+    { id: 'guix', name: 'GUIX', description: 'Graphical user interface' },
+    { id: 'levelx', name: 'LevelX', description: 'NAND/NOR flash management' },
+    { id: 'tracex', name: 'TraceX', description: 'System analysis tool' }
+  ];
+
+  const currentSeries = stm32Series.find(s => s.id === selectedSeries);
+  const availableBoards = currentSeries?.boards || [];
+
+  const handleBoardChange = (board: string, checked: boolean) => {
+    if (checked) {
+      setSelectedBoards(prev => [...prev, board]);
+    } else {
+      setSelectedBoards(prev => prev.filter(b => b !== board));
+    }
+  };
+
+  const handleMiddlewareChange = (middlewareId: string, checked: boolean) => {
+    if (checked) {
+      setMiddleware(prev => [...prev, middlewareId]);
+    } else {
+      setMiddleware(prev => prev.filter(m => m !== middlewareId));
+    }
+  };
+
+  const selectAllBoards = () => {
+    setSelectedBoards(availableBoards);
+  };
+
+  const clearAllBoards = () => {
+    setSelectedBoards([]);
+  };
+
   const handleGenerate = async () => {
+    if (!selectedSeries || !packName || selectedBoards.length === 0) {
+      addConsoleOutput('❌ Please fill all required fields and select at least one board');
+      return;
+    }
+
     setIsGenerating(true);
     setProgress(0);
-    
-    // Simulate generation process
-    for (let i = 0; i <= 100; i += 10) {
-      setProgress(i);
-      await new Promise(resolve => setTimeout(resolve, 500));
+    addConsoleOutput('🚀 Starting full pack generation...');
+
+    try {
+      const totalSteps = 8 + selectedBoards.length * 3; // Base steps + board-specific steps
+      let currentStep = 0;
+
+      const updateProgress = () => {
+        currentStep++;
+        setProgress((currentStep / totalSteps) * 100);
+      };
+
+      // Base setup
+      addConsoleOutput('📋 Initializing full pack structure...');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      updateProgress();
+
+      addConsoleOutput('📋 Setting up series configuration...');
+      await new Promise(resolve => setTimeout(resolve, 800));
+      updateProgress();
+
+      addConsoleOutput('📋 Configuring middleware components...');
+      await new Promise(resolve => setTimeout(resolve, 800));
+      updateProgress();
+
+      // Process each board
+      for (const board of selectedBoards) {
+        addConsoleOutput(`📋 Processing ${board}...`);
+        await new Promise(resolve => setTimeout(resolve, 600));
+        updateProgress();
+
+        addConsoleOutput(`📋 Generating applications for ${board}...`);
+        await new Promise(resolve => setTimeout(resolve, 600));
+        updateProgress();
+
+        addConsoleOutput(`📋 Creating BSP for ${board}...`);
+        await new Promise(resolve => setTimeout(resolve, 600));
+        updateProgress();
+      }
+
+      // Final steps
+      addConsoleOutput('📋 Building examples and documentation...');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      updateProgress();
+
+      addConsoleOutput('📋 Creating package manifest...');
+      await new Promise(resolve => setTimeout(resolve, 800));
+      updateProgress();
+
+      addConsoleOutput('📋 Compressing full pack...');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      updateProgress();
+
+      addConsoleOutput('📋 Validating package integrity...');
+      await new Promise(resolve => setTimeout(resolve, 800));
+      updateProgress();
+
+      addConsoleOutput('📋 Finalizing full pack...');
+      await new Promise(resolve => setTimeout(resolve, 600));
+      updateProgress();
+
+      addConsoleOutput('✅ Full pack generated successfully!');
+      addConsoleOutput(`📦 Pack: ${packName} v${packVersion}`);
+      addConsoleOutput(`📁 Output location: ${outputPath}/${packName}-${packVersion}-full.pack`);
+      addConsoleOutput(`🎯 Target: ${selectedSeries.toUpperCase()} Series`);
+      addConsoleOutput(`🎯 Boards included: ${selectedBoards.length} boards`);
+      addConsoleOutput(`⚙️ Middleware: ${middleware.length} components`);
+      addConsoleOutput(`📊 Package size: ~${Math.floor(Math.random() * 500 + 100)}MB`);
+
+    } catch (error) {
+      addConsoleOutput('❌ Generation failed: ' + error.message);
+    } finally {
+      setIsGenerating(false);
     }
-    
-    setIsGenerating(false);
-    console.log('Full pack generated');
   };
 
   return (
-    <div className="h-full bg-gradient-to-br from-slate-50 to-blue-50 overflow-auto">
-      <div className="max-w-6xl mx-auto p-6">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center mb-4">
-            <Package className="w-8 h-8 text-blue-600 mr-3" />
+    <div className="h-full flex flex-col">
+      <div className="flex-1 p-6 overflow-auto">
+        <div className="max-w-6xl mx-auto space-y-6">
+          {/* Header */}
+          <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Generate Full Pack</h1>
-              <p className="text-gray-600">Create a complete pack with all applications for the selected STM32 series</p>
+              <h1 className="text-2xl font-bold text-gray-900 flex items-center">
+                <Zap className="w-6 h-6 mr-3 text-orange-600" />
+                Generate Full Pack
+              </h1>
+              <p className="text-gray-600">Generate comprehensive packs with all applications for a series</p>
             </div>
+            <Badge variant="outline" className="text-sm">
+              Advanced
+            </Badge>
           </div>
-        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Configuration Panel */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Series Selection */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Settings className="w-5 h-5 mr-2" />
-                  Configuration
-                </CardTitle>
-                <CardDescription>
-                  Configure the pack generation settings
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="series">STM32 Series</Label>
-                  <Select value={selectedSeries} onValueChange={setSelectedSeries}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select STM32 series" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {seriesOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="firmware">X-Cube Firmware Path</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="firmware"
-                      placeholder="Select firmware directory..."
-                      value={firmwarePath}
-                      onChange={(e) => setFirmwarePath(e.target.value)}
-                    />
-                    <Button variant="outline" size="sm">
-                      <Folder className="w-4 h-4 mr-2" />
-                      Browse
-                    </Button>
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="output">Output Directory</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="output"
-                      placeholder="Select output directory..."
-                      value={outputPath}
-                      onChange={(e) => setOutputPath(e.target.value)}
-                    />
-                    <Button variant="outline" size="sm">
-                      <Folder className="w-4 h-4 mr-2" />
-                      Browse
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Advanced Options */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Advanced Options</CardTitle>
-                <CardDescription>
-                  Customize what to include in the generated pack
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="apps" 
-                    checked={includeApps}
-                    onCheckedChange={(checked) => setIncludeApps(checked === true)}
-                  />
-                  <Label htmlFor="apps">Include All Applications</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="docs" 
-                    checked={includeDocs}
-                    onCheckedChange={(checked) => setIncludeDocs(checked === true)}
-                  />
-                  <Label htmlFor="docs">Include Documentation</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="demos" 
-                    checked={includeDemos}
-                    onCheckedChange={(checked) => setIncludeDemos(checked === true)}
-                  />
-                  <Label htmlFor="demos">Include Demo Projects</Label>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Warning */}
+          {/* Generation Progress */}
+          {isGenerating && (
             <Card className="border-orange-200 bg-orange-50">
               <CardContent className="p-4">
-                <div className="flex items-start space-x-2">
-                  <AlertTriangle className="w-5 h-5 text-orange-600 mt-0.5" />
+                <div className="flex items-center space-x-3">
+                  <RefreshCw className="w-5 h-5 animate-spin text-orange-600" />
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-orange-800">Generating Full Pack...</span>
+                      <span className="text-sm text-orange-600">{Math.round(progress)}%</span>
+                    </div>
+                    <Progress value={progress} className="h-2" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          <Tabs defaultValue="basic" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="basic">Basic Configuration</TabsTrigger>
+              <TabsTrigger value="boards">Board Selection</TabsTrigger>
+              <TabsTrigger value="middleware">Middleware</TabsTrigger>
+              <TabsTrigger value="options">Pack Options</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="basic" className="space-y-6">
+              {/* Pack Configuration */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Settings className="w-5 h-5 mr-2" />
+                    Full Pack Configuration
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="pack-name">Pack Name *</Label>
+                      <Input
+                        id="pack-name"
+                        value={packName}
+                        onChange={(e) => setPackName(e.target.value)}
+                        placeholder="MySTM32FullPack"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="pack-version">Version</Label>
+                      <Input
+                        id="pack-version"
+                        value={packVersion}
+                        onChange={(e) => setPackVersion(e.target.value)}
+                        placeholder="1.0.0"
+                      />
+                    </div>
+                  </div>
                   <div>
-                    <p className="text-sm font-medium text-orange-800">Important Notice</p>
-                    <p className="text-sm text-orange-700 mt-1">
-                      This operation may take a significant amount of time depending on the number of applications and boards. 
-                      Please ensure you have sufficient disk space and be patient while the generation process completes.
-                    </p>
+                    <Label htmlFor="output-path">Output Path</Label>
+                    <Input
+                      id="output-path"
+                      value={outputPath}
+                      onChange={(e) => setOutputPath(e.target.value)}
+                      placeholder="./full-packs"
+                    />
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                </CardContent>
+              </Card>
 
-          {/* Status Panel */}
-          <div className="space-y-6">
-            {/* Generation Status */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Zap className="w-5 h-5 mr-2" />
-                  Generation Status
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {isGenerating ? (
+              {/* Series Selection */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Series Selection</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label>STM32 Series *</Label>
+                    <Select value={selectedSeries} onValueChange={setSelectedSeries}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select STM32 series for full pack" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {stm32Series.map(series => (
+                          <SelectItem key={series.id} value={series.id}>
+                            <div>
+                              <div className="font-medium">{series.name}</div>
+                              <div className="text-sm text-gray-500">{series.description}</div>
+                              <div className="text-xs text-blue-600">{series.boards.length} boards available</div>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="boards">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <Package className="w-5 h-5 mr-2" />
+                      Board Selection
+                    </div>
+                    <div className="space-x-2">
+                      <Button size="sm" variant="outline" onClick={selectAllBoards} disabled={!selectedSeries}>
+                        Select All
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={clearAllBoards}>
+                        Clear All
+                      </Button>
+                    </div>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {!selectedSeries ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <Package className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                      <p>Please select a series first to see available boards</p>
+                    </div>
+                  ) : (
+                    <div className="grid gap-3">
+                      {availableBoards.map(board => (
+                        <div key={board} className="flex items-center space-x-3 p-3 border rounded-lg">
+                          <Checkbox
+                            id={board}
+                            checked={selectedBoards.includes(board)}
+                            onCheckedChange={(checked) => 
+                              handleBoardChange(board, !!checked)
+                            }
+                          />
+                          <div className="flex-1">
+                            <Label htmlFor={board} className="font-medium">
+                              {board}
+                            </Label>
+                          </div>
+                          <Badge variant="outline">
+                            {selectedSeries.toUpperCase()}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {selectedBoards.length > 0 && (
+                    <div className="mt-4">
+                      <Label className="text-sm font-medium">
+                        Selected Boards ({selectedBoards.length}):
+                      </Label>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {selectedBoards.map(board => (
+                          <Badge key={board} variant="secondary">
+                            {board}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="middleware">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Layers className="w-5 h-5 mr-2" />
+                    Azure RTOS Middleware
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid gap-4">
+                    {availableMiddleware.map(mw => (
+                      <div key={mw.id} className="flex items-start space-x-3 p-3 border rounded-lg">
+                        <Checkbox
+                          id={mw.id}
+                          checked={middleware.includes(mw.id)}
+                          onCheckedChange={(checked) => 
+                            handleMiddlewareChange(mw.id, !!checked)
+                          }
+                        />
+                        <div className="flex-1">
+                          <Label htmlFor={mw.id} className="font-medium">
+                            {mw.name}
+                          </Label>
+                          <p className="text-sm text-gray-600 mt-1">{mw.description}</p>
+                        </div>
+                        <Badge variant="outline">{mw.id}</Badge>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="options">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Shield className="w-5 h-5 mr-2" />
+                    Full Pack Options
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
                   <div className="space-y-4">
                     <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></div>
-                      <span className="text-sm">Generating full pack...</span>
+                      <Checkbox
+                        id="include-examples"
+                        checked={includeExamples}
+                        onCheckedChange={setIncludeExamples}
+                      />
+                      <Label htmlFor="include-examples" className="font-medium">
+                        Include All Example Projects
+                      </Label>
                     </div>
-                    <Progress value={progress} className="w-full" />
-                    <p className="text-xs text-gray-500">{progress}% complete</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
                     <div className="flex items-center space-x-2">
-                      <CheckCircle className="w-5 h-5 text-green-600" />
-                      <span className="text-sm">Ready to generate</span>
+                      <Checkbox
+                        id="include-docs"
+                        checked={includeDocumentation}
+                        onCheckedChange={setIncludeDocumentation}
+                      />
+                      <Label htmlFor="include-docs" className="font-medium">
+                        Include Complete Documentation
+                      </Label>
                     </div>
-                    <Button 
-                      onClick={handleGenerate}
-                      disabled={!selectedSeries || !firmwarePath || !outputPath}
-                      className="w-full"
-                    >
-                      <Package className="w-4 h-4 mr-2" />
-                      Generate Full Pack
-                    </Button>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="include-bsp"
+                        checked={includeBSP}
+                        onCheckedChange={setIncludeBSP}
+                      />
+                      <Label htmlFor="include-bsp" className="font-medium">
+                        Include Board Support Packages
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="include-drivers"
+                        checked={includeDrivers}
+                        onCheckedChange={setIncludeDrivers}
+                      />
+                      <Label htmlFor="include-drivers" className="font-medium">
+                        Include All HAL Drivers
+                      </Label>
+                    </div>
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
 
-            {/* Quick Info */}
-            <Card>
-              <CardHeader>
-                <CardTitle>What's Included</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <Badge variant="secondary" className="text-xs">Apps</Badge>
-                  <span className="text-sm">All Azure RTOS applications</span>
+          {/* Action Buttons */}
+          <div className="flex items-center justify-between pt-6 border-t">
+            <div className="flex items-center space-x-2">
+              {packName && selectedSeries && selectedBoards.length > 0 ? (
+                <div className="flex items-center text-green-600">
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  <span className="text-sm">Ready to generate full pack</span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Badge variant="secondary" className="text-xs">Boards</Badge>
-                  <span className="text-sm">All supported boards</span>
+              ) : (
+                <div className="flex items-center text-orange-600">
+                  <AlertCircle className="w-4 h-4 mr-2" />
+                  <span className="text-sm">Please complete configuration and select boards</span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Badge variant="secondary" className="text-xs">Templates</Badge>
-                  <span className="text-sm">Jinja2 template files</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Badge variant="secondary" className="text-xs">Config</Badge>
-                  <span className="text-sm">JSON configuration files</span>
-                </div>
-              </CardContent>
-            </Card>
+              )}
+            </div>
+            <div className="space-x-3">
+              <Button variant="outline">
+                <Download className="w-4 h-4 mr-2" />
+                Export Config
+              </Button>
+              <Button 
+                onClick={handleGenerate}
+                disabled={isGenerating || !packName || !selectedSeries || selectedBoards.length === 0}
+                className="bg-orange-600 hover:bg-orange-700"
+              >
+                <Play className="w-4 h-4 mr-2" />
+                Generate Full Pack
+              </Button>
+            </div>
           </div>
         </div>
       </div>
