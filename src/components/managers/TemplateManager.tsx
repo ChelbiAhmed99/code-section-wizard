@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -233,13 +232,13 @@ void SystemClock_Config(void)
           <FolderOpen className={`w-4 h-4 mr-2 ${isExpanded ? 'text-blue-600' : 'text-gray-500'}`} />
           <span className="text-sm font-medium">{folder.name}</span>
           <Badge variant="outline" className="ml-auto text-xs">
-            {folder.files.length + folder.subfolders.length}
+            {(folder.files?.length || 0) + (folder.subfolders?.length || 0)}
           </Badge>
         </div>
         
         {isExpanded && (
           <div className="ml-4">
-            {folder.files.map((file) => (
+            {folder.files?.map((file) => (
               <div
                 key={file.id}
                 className={`flex items-center p-2 hover:bg-blue-50 cursor-pointer rounded ${
@@ -255,7 +254,7 @@ void SystemClock_Config(void)
               </div>
             ))}
             
-            {folder.subfolders.map((subfolder) => 
+            {folder.subfolders?.map((subfolder) => 
               renderFolderTree(subfolder, level + 1)
             )}
           </div>
@@ -271,10 +270,12 @@ void SystemClock_Config(void)
     ) : [];
 
   function getAllFiles(folder: TemplateFolder): TemplateFile[] {
-    let files = [...folder.files];
-    folder.subfolders.forEach(subfolder => {
-      files = files.concat(getAllFiles(subfolder));
-    });
+    let files = [...(folder.files || [])];
+    if (folder.subfolders) {
+      folder.subfolders.forEach(subfolder => {
+        files = files.concat(getAllFiles(subfolder));
+      });
+    }
     return files;
   }
 
