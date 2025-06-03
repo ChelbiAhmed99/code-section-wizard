@@ -429,7 +429,7 @@ export const FullPackGenerator: React.FC = () => {
                       <Checkbox
                         id="include-examples"
                         checked={includeExamples}
-                        onCheckedChange={setIncludeExamples}
+                        onCheckedChange={(checked) => setIncludeExamples(!!checked)}
                       />
                       <Label htmlFor="include-examples" className="font-medium">
                         Include All Example Projects
@@ -439,7 +439,7 @@ export const FullPackGenerator: React.FC = () => {
                       <Checkbox
                         id="include-docs"
                         checked={includeDocumentation}
-                        onCheckedChange={setIncludeDocumentation}
+                        onCheckedChange={(checked) => setIncludeDocumentation(!!checked)}
                       />
                       <Label htmlFor="include-docs" className="font-medium">
                         Include Complete Documentation
@@ -449,7 +449,7 @@ export const FullPackGenerator: React.FC = () => {
                       <Checkbox
                         id="include-bsp"
                         checked={includeBSP}
-                        onCheckedChange={setIncludeBSP}
+                        onCheckedChange={(checked) => setIncludeBSP(!!checked)}
                       />
                       <Label htmlFor="include-bsp" className="font-medium">
                         Include Board Support Packages
@@ -459,7 +459,7 @@ export const FullPackGenerator: React.FC = () => {
                       <Checkbox
                         id="include-drivers"
                         checked={includeDrivers}
-                        onCheckedChange={setIncludeDrivers}
+                        onCheckedChange={(checked) => setIncludeDrivers(!!checked)}
                       />
                       <Label htmlFor="include-drivers" className="font-medium">
                         Include All HAL Drivers

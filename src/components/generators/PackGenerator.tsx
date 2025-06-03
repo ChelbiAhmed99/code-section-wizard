@@ -301,7 +301,7 @@ export const PackGenerator: React.FC = () => {
                       <Checkbox
                         id="include-examples"
                         checked={includeExamples}
-                        onCheckedChange={setIncludeExamples}
+                        onCheckedChange={(checked) => setIncludeExamples(!!checked)}
                       />
                       <Label htmlFor="include-examples" className="font-medium">
                         Include Example Projects
@@ -311,7 +311,7 @@ export const PackGenerator: React.FC = () => {
                       <Checkbox
                         id="include-docs"
                         checked={includeDocumentation}
-                        onCheckedChange={setIncludeDocumentation}
+                        onCheckedChange={(checked) => setIncludeDocumentation(!!checked)}
                       />
                       <Label htmlFor="include-docs" className="font-medium">
                         Include Documentation
